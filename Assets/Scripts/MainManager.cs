@@ -3,18 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
+
 
 public class MainManager : MonoBehaviour
 {
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
-
+    public static string playerName;
     public Text ScoreText;
+    public Text playerNameField;
     public GameObject GameOverText;
-    
+    public static MainManager Instance;
     private bool m_Started = false;
     private int m_Points;
+    public Text highScore;
+    private string highScoreText;
     
     private bool m_GameOver = false;
 
@@ -22,6 +27,8 @@ public class MainManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //transfer the called json from HighScoreData.cs and assign it to highScoreText 
+        //highScoreText.text = 
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -37,7 +44,16 @@ public class MainManager : MonoBehaviour
             }
         }
     }
-
+    private void Awake()
+    {
+        if(Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
     private void Update()
     {
         if (!m_Started)
@@ -72,5 +88,22 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        SaveScore();
+    }
+    [System.Serializable]
+    class SaveData
+    {
+        public string name;
+        public int score;
+    }
+    public void SaveScore()
+    {
+        SaveData data = new SaveData();
+        data.score = m_Points;
+        data.name = playerName;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
     }
 }
